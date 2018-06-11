@@ -87,7 +87,7 @@ contract Ownable {
 
 
   /**
-   * @dev Throws if called by any account other than the owner.
+   * @dev reverts if called by any account other than the owner.
    */
   modifier onlyOwner() {
     require(msg.sender == owner);
@@ -152,7 +152,7 @@ library SafeMathLibExt {
  * Haltable
  *
  * Abstract contract that allows children to implement an
- * emergency stop mechanism. Differs from Pausable by causing a throw when in halt mode.
+ * emergency stop mechanism. Differs from Pausable by causing a revert when in halt mode.
  *
  *
  * Originally envisioned in FirstBlood ICO contract.
@@ -161,17 +161,17 @@ contract Haltable is Ownable {
   bool public halted;
 
   modifier stopInEmergency {
-    if (halted) throw;
+    if (halted) revert;
     _;
   }
 
   modifier stopNonOwnersInEmergency {
-    if (halted && msg.sender != owner) throw;
+    if (halted && msg.sender != owner) revert;
     _;
   }
 
   modifier onlyInEmergency {
-    if (!halted) throw;
+    if (!halted) revert;
     _;
   }
 
@@ -411,24 +411,24 @@ contract CrowdsaleExt is Haltable {
 
     multisigWallet = _multisigWallet;
     if(multisigWallet == 0) {
-        throw;
+        revert;
     }
 
     if(_start == 0) {
-        throw;
+        revert;
     }
 
     startsAt = _start;
 
     if(_end == 0) {
-        throw;
+        revert;
     }
 
     endsAt = _end;
 
     // Don't mess the dates
     if(startsAt >= endsAt) {
-        throw;
+        revert;
     }
 
     // Minimum funding goal can be zero
@@ -443,7 +443,7 @@ contract CrowdsaleExt is Haltable {
    * Don't expect to just send in money and get tokens.
    */
   function() payable {
-    throw;
+    revert;
   }
 
   /**
@@ -461,18 +461,18 @@ contract CrowdsaleExt is Haltable {
     // Determine if it's a good time to accept investment from this participant
     if(getState() == State.PreFunding) {
       // Are we whitelisted for early deposit
-      throw;
+      revert;
     } else if(getState() == State.Funding) {
       // Retail participants can only come in when the crowdsale is running
       // pass
       if(isWhiteListed) {
         if(!earlyParticipantWhitelist[receiver].status) {
-          throw;
+          revert;
         }
       }
     } else {
       // Unwanted state
-      throw;
+      revert;
     }
 
     uint weiAmount = msg.value;
@@ -482,24 +482,24 @@ contract CrowdsaleExt is Haltable {
 
     if(tokenAmount == 0) {
       // Dust transaction
-      throw;
+      revert;
     }
 
     if(isWhiteListed) {
       if(tokenAmount < earlyParticipantWhitelist[receiver].minCap && tokenAmountOf[receiver] == 0) {
         // tokenAmount < minCap for investor
-        throw;
+        revert;
       }
 
       // Check that we did not bust the investor's cap
       if (isBreakingInvestorCap(receiver, tokenAmount)) {
-        throw;
+        revert;
       }
 
       updateInheritedEarlyParticipantWhitelist(receiver, tokenAmount);
     } else {
       if(tokenAmount < token.minCap() && tokenAmountOf[receiver] == 0) {
-        throw;
+        revert;
       }
     }
 
@@ -518,13 +518,13 @@ contract CrowdsaleExt is Haltable {
 
     // Check that we did not bust the cap
     if(isBreakingCap(weiAmount, tokenAmount, weiRaised, tokensSold)) {
-      throw;
+      revert;
     }
 
     assignTokens(receiver, tokenAmount);
 
     // Pocket the money
-    if(!multisigWallet.send(weiAmount)) throw;
+    if(!multisigWallet.send(weiAmount)) revert;
 
     // Tell us invest was success
     Invested(receiver, weiAmount, tokenAmount, customerId);
@@ -549,7 +549,7 @@ contract CrowdsaleExt is Haltable {
   function distributeReservedTokens(uint reservedTokensDistributionBatch) public inState(State.Success) onlyOwner stopInEmergency {
     // Already finalized
     if(finalized) {
-      throw;
+      revert;
     }
 
     // Finalizing is optional. We only call it if we are given a finalizing agent.
@@ -577,7 +577,7 @@ contract CrowdsaleExt is Haltable {
 
     // Already finalized
     if(finalized) {
-      throw;
+      revert;
     }
 
     // Finalizing is optional. We only call it if we are given a finalizing agent.
@@ -600,7 +600,7 @@ contract CrowdsaleExt is Haltable {
 
     // Don't allow setting bad agent
     if(!finalizeAgent.isFinalizeAgent()) {
-      throw;
+      revert;
     }
   }
 
@@ -608,7 +608,7 @@ contract CrowdsaleExt is Haltable {
    * Allow addresses to do early participation.
    */
   function setEarlyParticipantWhitelist(address addr, bool status, uint minCap, uint maxCap) public onlyOwner {
-    if (!isWhiteListed) throw;
+    if (!isWhiteListed) revert;
     require(addr != address(0));
     require(maxCap > 0);
     require(minCap <= maxCap);
@@ -625,7 +625,7 @@ contract CrowdsaleExt is Haltable {
   }
 
   function setEarlyParticipantWhitelistMultiple(address[] addrs, bool[] statuses, uint[] minCaps, uint[] maxCaps) public onlyOwner {
-    if (!isWhiteListed) throw;
+    if (!isWhiteListed) revert;
     require(now <= endsAt);
     require(addrs.length == statuses.length);
     require(statuses.length == minCaps.length);
@@ -636,8 +636,8 @@ contract CrowdsaleExt is Haltable {
   }
 
   function updateInheritedEarlyParticipantWhitelist(address reciever, uint tokensBought) private {
-    if (!isWhiteListed) throw;
-    if (tokensBought < earlyParticipantWhitelist[reciever].minCap && tokenAmountOf[reciever] == 0) throw;
+    if (!isWhiteListed) revert;
+    if (tokensBought < earlyParticipantWhitelist[reciever].minCap && tokenAmountOf[reciever] == 0) revert;
 
     uint8 tierPosition = getTierPosition(this);
 
@@ -648,12 +648,12 @@ contract CrowdsaleExt is Haltable {
   }
 
   function updateEarlyParticipantWhitelist(address addr, uint tokensBought) public {
-    if (!isWhiteListed) throw;
+    if (!isWhiteListed) revert;
     require(addr != address(0));
     require(now <= endsAt);
     require(isTierJoined(msg.sender));
-    if (tokensBought < earlyParticipantWhitelist[addr].minCap && tokenAmountOf[addr] == 0) throw;
-    //if (addr != msg.sender && contractAddr != msg.sender) throw;
+    if (tokensBought < earlyParticipantWhitelist[addr].minCap && tokenAmountOf[addr] == 0) revert;
+    //if (addr != msg.sender && contractAddr != msg.sender) revert;
     uint newMaxCap = earlyParticipantWhitelist[addr].maxCap;
     newMaxCap = newMaxCap.minus(tokensBought);
     earlyParticipantWhitelist[addr] = WhiteListData({status:earlyParticipantWhitelist[addr].status, minCap:0, maxCap:newMaxCap});
@@ -718,7 +718,7 @@ contract CrowdsaleExt is Haltable {
     require(now <= startsAt);
 
     CrowdsaleExt lastTierCntrct = CrowdsaleExt(getLastTier());
-    if (lastTierCntrct.finalized()) throw;
+    if (lastTierCntrct.finalized()) revert;
 
     uint8 tierPosition = getTierPosition(this);
 
@@ -750,7 +750,7 @@ contract CrowdsaleExt is Haltable {
     require(now <= endsAt);
 
     CrowdsaleExt lastTierCntrct = CrowdsaleExt(getLastTier());
-    if (lastTierCntrct.finalized()) throw;
+    if (lastTierCntrct.finalized()) revert;
 
 
     uint8 tierPosition = getTierPosition(this);
@@ -776,7 +776,7 @@ contract CrowdsaleExt is Haltable {
 
     // Don't allow setting bad agent
     if(!pricingStrategy.isPricingStrategy()) {
-      throw;
+      revert;
     }
   }
 
@@ -791,7 +791,7 @@ contract CrowdsaleExt is Haltable {
 
     // Change
     if(investorCount > MAX_INVESTMENTS_BEFORE_MULTISIG_CHANGE) {
-      throw;
+      revert;
     }
 
     multisigWallet = addr;
@@ -845,7 +845,7 @@ contract CrowdsaleExt is Haltable {
 
   /** Modified allowing execution only if the crowdsale is currently running.  */
   modifier inState(State state) {
-    if(getState() != state) throw;
+    if(getState() != state) revert;
     _;
   }
 
@@ -928,7 +928,7 @@ contract StandardToken is ERC20, SafeMath {
     //  allowance to zero by calling `approve(_spender, 0)` if it is not
     //  already 0 to mitigate the race condition described here:
     //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) throw;
+    if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) revert;
 
     allowed[msg.sender][_spender] = _value;
     Approval(msg.sender, _spender, _value);
@@ -984,14 +984,14 @@ contract MintableTokenExt is StandardToken, Ownable {
   modifier onlyMintAgent() {
     // Only crowdsale contracts are allowed to mint new tokens
     if(!mintAgents[msg.sender]) {
-        throw;
+        revert;
     }
     _;
   }
 
   /** Make sure we are not done yet. */
   modifier canMint() {
-    if(mintingFinished) throw;
+    if(mintingFinished) revert;
     _;
   }
 

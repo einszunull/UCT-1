@@ -23,7 +23,7 @@ contract Ownable {
 
 
   /**
-   * @dev Throws if called by any account other than the owner.
+   * @dev reverts if called by any account other than the owner.
    */
   modifier onlyOwner() {
     require(msg.sender == owner);
@@ -134,7 +134,7 @@ contract FlatPricingExt is PricingStrategy, Ownable {
   event RateChanged(uint newOneTokenInWei);
 
   modifier onlyTier() {
-    if (msg.sender != address(tier)) throw;
+    if (msg.sender != address(tier)) revert;
     _;
   }
 

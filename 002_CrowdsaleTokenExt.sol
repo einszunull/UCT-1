@@ -36,7 +36,7 @@ contract Ownable {
 
 
   /**
-   * @dev Throws if called by any account other than the owner.
+   * @dev reverts if called by any account other than the owner.
    */
   modifier onlyOwner() {
     require(msg.sender == owner);
@@ -166,7 +166,7 @@ contract StandardToken is ERC20, SafeMath {
     //  allowance to zero by calling `approve(_spender, 0)` if it is not
     //  already 0 to mitigate the race condition described here:
     //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) throw;
+    if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) revert;
 
     allowed[msg.sender][_spender] = _value;
     Approval(msg.sender, _spender, _value);
@@ -254,11 +254,11 @@ contract UpgradeableToken is StandardToken {
       UpgradeState state = getUpgradeState();
       if(!(state == UpgradeState.ReadyToUpgrade || state == UpgradeState.Upgrading)) {
         // Called in a bad state
-        throw;
+        revert;
       }
 
       // Validate input value.
-      if (value == 0) throw;
+      if (value == 0) revert;
 
       balances[msg.sender] = safeSub(balances[msg.sender], value);
 
@@ -278,21 +278,21 @@ contract UpgradeableToken is StandardToken {
 
       if(!canUpgrade()) {
         // The token is not yet in a state that we could think upgrading
-        throw;
+        revert;
       }
 
-      if (agent == 0x0) throw;
+      if (agent == 0x0) revert;
       // Only a master can designate the next agent
-      if (msg.sender != upgradeMaster) throw;
+      if (msg.sender != upgradeMaster) revert;
       // Upgrade has already begun for an agent
-      if (getUpgradeState() == UpgradeState.Upgrading) throw;
+      if (getUpgradeState() == UpgradeState.Upgrading) revert;
 
       upgradeAgent = UpgradeAgent(agent);
 
       // Bad interface
-      if(!upgradeAgent.isUpgradeAgent()) throw;
+      if(!upgradeAgent.isUpgradeAgent()) revert;
       // Make sure that token supplies match in source and target
-      if (upgradeAgent.originalSupply() != totalSupply) throw;
+      if (upgradeAgent.originalSupply() != totalSupply) revert;
 
       UpgradeAgentSet(upgradeAgent);
   }
@@ -313,8 +313,8 @@ contract UpgradeableToken is StandardToken {
    * This allows us to set a new owner for the upgrade mechanism.
    */
   function setUpgradeMaster(address master) public {
-      if (master == 0x0) throw;
-      if (msg.sender != upgradeMaster) throw;
+      if (master == 0x0) revert;
+      if (msg.sender != upgradeMaster) revert;
       upgradeMaster = master;
   }
 
@@ -350,7 +350,7 @@ contract ReleasableToken is ERC20, Ownable {
 
     if(!released) {
         if(!transferAgents[_sender]) {
-            throw;
+            revert;
         }
     }
 
@@ -387,7 +387,7 @@ contract ReleasableToken is ERC20, Ownable {
   /** The function can be called only before or after the tokens have been releasesd */
   modifier inReleaseState(bool releaseState) {
     if(releaseState != released) {
-        throw;
+        revert;
     }
     _;
   }
@@ -395,7 +395,7 @@ contract ReleasableToken is ERC20, Ownable {
   /** The function can be called only by a whitelisted release agent. */
   modifier onlyReleaseAgent() {
     if(msg.sender != releaseAgent) {
-        throw;
+        revert;
     }
     _;
   }
@@ -493,14 +493,14 @@ contract MintableTokenExt is StandardToken, Ownable {
   modifier onlyMintAgent() {
     // Only crowdsale contracts are allowed to mint new tokens
     if(!mintAgents[msg.sender]) {
-        throw;
+        revert;
     }
     _;
   }
 
   /** Make sure we are not done yet. */
   modifier canMint() {
-    if(mintingFinished) throw;
+    if(mintingFinished) revert;
     _;
   }
 
@@ -653,7 +653,7 @@ contract CrowdsaleTokenExt is ReleasableToken, MintableTokenExt, UpgradeableToke
     if(!_mintable) {
       mintingFinished = true;
       if(totalSupply == 0) {
-        throw; // Cannot create a token without supply and no minting
+        revert; // Cannot create a token without supply and no minting
       }
     }
   }
