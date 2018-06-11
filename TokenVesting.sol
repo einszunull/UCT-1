@@ -2,7 +2,6 @@ pragma solidity ^0.4.23;
 
 
 
-/// @title Vesting trustee contract for United token.
 contract UnitedVestingTrustee is Claimable {
     using SafeMath for uint256;
 
@@ -10,7 +9,7 @@ contract UnitedVestingTrustee is Claimable {
     UnitedSmartToken public token;
 
     struct Grant {
-        
+
                 uint256 value;
                 uint256 start;
                 uint256 cliff;
@@ -25,23 +24,23 @@ contract UnitedVestingTrustee is Claimable {
 
     // Total tokens available for vesting.
     uint256 public totalVesting;
- 
+
     event NewGrant(address indexed _from, address indexed _to, uint256 _value);
     event UnlockGrant(address indexed _holder, uint256 _value);
     event RevokeGrant(address indexed _holder, uint256 _refund);
 
     /// @dev Constructor that initializes the address of the Unitedsmart contract.
     /// @param _token UnitedSmartToken The address of the previously deployed Unitedcrowd smart contract.
-    
+
     function UnitedVestingTrustee(UnitedSmartToken _token) {
         require(_token != address(0));
 
         token = _token;
     }
-    
 
-   
-    
+
+
+
     function grant(address _to, uint256 _value, uint256 _start, uint256 _cliff, uint256 _end, bool _revokable)
     public onlyOwner {
         require(_to != address(0));
@@ -74,8 +73,8 @@ contract UnitedVestingTrustee is Claimable {
 
     /// @dev Revoke the grant of tokens of a specifed address.
     /// @param _holder The address which will have its tokens revoked.
-    
-    
+
+
     function revoke(address _holder) public onlyOwner {
         Grant grant = grants[_holder];
 
@@ -93,7 +92,7 @@ contract UnitedVestingTrustee is Claimable {
         RevokeGrant(_holder, refund);
     }
 
-    
+
     /// @dev Calculate the total amount of vested tokens of a holder at a given time.
     /// @param _holder address The address of the holder.
     /// @param _time uint256 The specific time.
@@ -106,7 +105,7 @@ contract UnitedVestingTrustee is Claimable {
      return calculateVestedTokens(grant, _time);
     }
 
-    
+
     function calculateVestedTokens(Grant _grant, uint256 _time) private constant returns (uint256) {
         // If we're before the cliff, then nothing is vested.
         if (_time < _grant.cliff) {
@@ -139,14 +138,14 @@ contract UnitedVestingTrustee is Claimable {
         if (transferable == 0) {
             return;
         }
-     
+
         grant.transferred = grant.transferred.add(transferable);
         totalVesting = totalVesting.sub(transferable);
         token.transfer(msg.sender, transferable);
 
         UnlockGrant(msg.sender, transferable);
-       // lots 
+       // lots
     }
-    
-    
+
+
 }

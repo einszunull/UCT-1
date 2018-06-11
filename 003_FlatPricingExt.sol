@@ -1,4 +1,4 @@
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.23;
 
 
 /**
@@ -95,25 +95,25 @@ library SafeMathLibExt {
 
   function times(uint a, uint b) returns (uint) {
     uint c = a * b;
-    assert(a == 0 || c / a == b);
+    require(a == 0 || c / a == b);
     return c;
   }
 
   function divides(uint a, uint b) returns (uint) {
-    assert(b > 0);
+    require(b > 0);
     uint c = a / b;
-    assert(a == b * c + a % b);
+    require(a == b * c + a % b);
     return c;
   }
 
   function minus(uint a, uint b) returns (uint) {
-    assert(b <= a);
+    require(b <= a);
     return a - b;
   }
 
   function plus(uint a, uint b) returns (uint) {
     uint c = a + b;
-    assert(c>=a);
+    require(c>=a);
     return c;
   }
 
@@ -141,8 +141,8 @@ contract FlatPricingExt is PricingStrategy, Ownable {
 
 
   function setTier(address _tier) onlyOwner {
-    assert(_tier != address(0));
-    assert(tier == address(0));
+    require(_tier != address(0));
+    require(tier == address(0));
     tier = _tier;
   }
 

@@ -1,6 +1,4 @@
-// Temporarily have SafeMath here until all contracts have been migrated to SafeMathLib version from OpenZeppelin
-
-pragma solidity ^0.4.8;
+pragma solidity ^0.4.23;
 
 
 /**
@@ -9,25 +7,25 @@ pragma solidity ^0.4.8;
 contract SafeMath {
   function safeMul(uint a, uint b) internal returns (uint) {
     uint c = a * b;
-    assert(a == 0 || c / a == b);
+    require(a == 0 || c / a == b);
     return c;
   }
 
   function safeDiv(uint a, uint b) internal returns (uint) {
-    assert(b > 0);
+    require(b > 0);
     uint c = a / b;
-    assert(a == b * c + a % b);
+    require(a == b * c + a % b);
     return c;
   }
 
   function safeSub(uint a, uint b) internal returns (uint) {
-    assert(b <= a);
+    require(b <= a);
     return a - b;
   }
 
   function safeAdd(uint a, uint b) internal returns (uint) {
     uint c = a + b;
-    assert(c>=a && c>=b);
+    require(c>=a && c>=b);
     return c;
   }
 
@@ -125,25 +123,25 @@ library SafeMathLibExt {
 
   function times(uint a, uint b) returns (uint) {
     uint c = a * b;
-    assert(a == 0 || c / a == b);
+    require(a == 0 || c / a == b);
     return c;
   }
 
   function divides(uint a, uint b) returns (uint) {
-    assert(b > 0);
+    require(b > 0);
     uint c = a / b;
-    assert(a == b * c + a % b);
+    require(a == b * c + a % b);
     return c;
   }
 
   function minus(uint a, uint b) returns (uint) {
-    assert(b <= a);
+    require(b <= a);
     return a - b;
   }
 
   function plus(uint a, uint b) returns (uint) {
     uint c = a + b;
-    assert(c>=a);
+    require(c>=a);
     return c;
   }
 
@@ -596,8 +594,8 @@ contract CrowdsaleExt is Haltable {
    * Design choice: no state restrictions on setting this, so that we can fix fat finger mistakes.
    */
   function setFinalizeAgent(FinalizeAgent addr) public onlyOwner {
-    assert(address(addr) != address(0));
-    assert(address(finalizeAgent) == address(0));
+    require(address(addr) != address(0));
+    require(address(finalizeAgent) == address(0));
     finalizeAgent = addr;
 
     // Don't allow setting bad agent
@@ -611,10 +609,10 @@ contract CrowdsaleExt is Haltable {
    */
   function setEarlyParticipantWhitelist(address addr, bool status, uint minCap, uint maxCap) public onlyOwner {
     if (!isWhiteListed) throw;
-    assert(addr != address(0));
-    assert(maxCap > 0);
-    assert(minCap <= maxCap);
-    assert(now <= endsAt);
+    require(addr != address(0));
+    require(maxCap > 0);
+    require(minCap <= maxCap);
+    require(now <= endsAt);
 
     if (!isAddressWhitelisted(addr)) {
       whitelistedParticipants.push(addr);
@@ -628,10 +626,10 @@ contract CrowdsaleExt is Haltable {
 
   function setEarlyParticipantWhitelistMultiple(address[] addrs, bool[] statuses, uint[] minCaps, uint[] maxCaps) public onlyOwner {
     if (!isWhiteListed) throw;
-    assert(now <= endsAt);
-    assert(addrs.length == statuses.length);
-    assert(statuses.length == minCaps.length);
-    assert(minCaps.length == maxCaps.length);
+    require(now <= endsAt);
+    require(addrs.length == statuses.length);
+    require(statuses.length == minCaps.length);
+    require(minCaps.length == maxCaps.length);
     for (uint iterator = 0; iterator < addrs.length; iterator++) {
       setEarlyParticipantWhitelist(addrs[iterator], statuses[iterator], minCaps[iterator], maxCaps[iterator]);
     }
@@ -651,9 +649,9 @@ contract CrowdsaleExt is Haltable {
 
   function updateEarlyParticipantWhitelist(address addr, uint tokensBought) public {
     if (!isWhiteListed) throw;
-    assert(addr != address(0));
-    assert(now <= endsAt);
-    assert(isTierJoined(msg.sender));
+    require(addr != address(0));
+    require(now <= endsAt);
+    require(isTierJoined(msg.sender));
     if (tokensBought < earlyParticipantWhitelist[addr].minCap && tokenAmountOf[addr] == 0) throw;
     //if (addr != msg.sender && contractAddr != msg.sender) throw;
     uint newMaxCap = earlyParticipantWhitelist[addr].maxCap;
@@ -692,9 +690,9 @@ contract CrowdsaleExt is Haltable {
   }
 
   function setJoinedCrowdsales(address addr) private onlyOwner {
-    assert(addr != address(0));
-    assert(joinedCrowdsalesLen <= joinedCrowdsalesLenMax);
-    assert(!isTierJoined(addr));
+    require(addr != address(0));
+    require(joinedCrowdsalesLen <= joinedCrowdsalesLenMax);
+    require(!isTierJoined(addr));
     joinedCrowdsales.push(addr);
     joinedCrowdsaleState[addr] = JoinedCrowdsaleStatus({
       isJoined: true,
@@ -704,20 +702,20 @@ contract CrowdsaleExt is Haltable {
   }
 
   function updateJoinedCrowdsalesMultiple(address[] addrs) public onlyOwner {
-    assert(addrs.length > 0);
-    assert(joinedCrowdsalesLen == 0);
-    assert(addrs.length <= joinedCrowdsalesLenMax);
+    require(addrs.length > 0);
+    require(joinedCrowdsalesLen == 0);
+    require(addrs.length <= joinedCrowdsalesLenMax);
     for (uint8 iter = 0; iter < addrs.length; iter++) {
       setJoinedCrowdsales(addrs[iter]);
     }
   }
 
   function setStartsAt(uint time) onlyOwner {
-    assert(!finalized);
-    assert(isUpdatable);
-    assert(now <= time); // Don't change past
-    assert(time <= endsAt);
-    assert(now <= startsAt);
+    require(!finalized);
+    require(isUpdatable);
+    require(now <= time); // Don't change past
+    require(time <= endsAt);
+    require(now <= startsAt);
 
     CrowdsaleExt lastTierCntrct = CrowdsaleExt(getLastTier());
     if (lastTierCntrct.finalized()) throw;
@@ -727,7 +725,7 @@ contract CrowdsaleExt is Haltable {
     //start time should be greater then end time of previous tiers
     for (uint8 j = 0; j < tierPosition; j++) {
       CrowdsaleExt crowdsale = CrowdsaleExt(joinedCrowdsales[j]);
-      assert(time >= crowdsale.endsAt());
+      require(time >= crowdsale.endsAt());
     }
 
     startsAt = time;
@@ -745,11 +743,11 @@ contract CrowdsaleExt is Haltable {
    *
    */
   function setEndsAt(uint time) public onlyOwner {
-    assert(!finalized);
-    assert(isUpdatable);
-    assert(now <= time);// Don't change past
-    assert(startsAt <= time);
-    assert(now <= endsAt);
+    require(!finalized);
+    require(isUpdatable);
+    require(now <= time);// Don't change past
+    require(startsAt <= time);
+    require(now <= endsAt);
 
     CrowdsaleExt lastTierCntrct = CrowdsaleExt(getLastTier());
     if (lastTierCntrct.finalized()) throw;
@@ -759,7 +757,7 @@ contract CrowdsaleExt is Haltable {
 
     for (uint8 j = tierPosition + 1; j < joinedCrowdsalesLen; j++) {
       CrowdsaleExt crowdsale = CrowdsaleExt(joinedCrowdsales[j]);
-      assert(time <= crowdsale.startsAt());
+      require(time <= crowdsale.startsAt());
     }
 
     endsAt = time;
@@ -772,8 +770,8 @@ contract CrowdsaleExt is Haltable {
    * Design choice: no state restrictions on the set, so that we can fix fat finger mistakes.
    */
   function setPricingStrategy(PricingStrategy _pricingStrategy) public onlyOwner {
-    assert(address(_pricingStrategy) != address(0));
-    assert(address(pricingStrategy) == address(0));
+    require(address(_pricingStrategy) != address(0));
+    require(address(pricingStrategy) == address(0));
     pricingStrategy = _pricingStrategy;
 
     // Don't allow setting bad agent
@@ -1028,10 +1026,10 @@ contract MintableTokenExt is StandardToken, Ownable {
     uint[] inPercentageUnit,
     uint[] inPercentageDecimals
   ) public canMint onlyOwner {
-    assert(!reservedTokensDestinationsAreSet);
-    assert(addrs.length == inTokens.length);
-    assert(inTokens.length == inPercentageUnit.length);
-    assert(inPercentageUnit.length == inPercentageDecimals.length);
+    require(!reservedTokensDestinationsAreSet);
+    require(addrs.length == inTokens.length);
+    require(inTokens.length == inPercentageUnit.length);
+    require(inPercentageUnit.length == inPercentageDecimals.length);
     for (uint iterator = 0; iterator < addrs.length; iterator++) {
       if (addrs[iterator] != address(0)) {
         setReservedTokensList(addrs[iterator], inTokens[iterator], inPercentageUnit[iterator], inPercentageDecimals[iterator]);
@@ -1063,7 +1061,7 @@ contract MintableTokenExt is StandardToken, Ownable {
   }
 
   function setReservedTokensList(address addr, uint inTokens, uint inPercentageUnit, uint inPercentageDecimals) private canMint onlyOwner {
-    assert(addr != address(0));
+    require(addr != address(0));
     if (!isAddressReserved(addr)) {
       reservedTokensDestinations.push(addr);
       reservedTokensDestinationsLen++;
@@ -1116,7 +1114,7 @@ contract MintedTokenCappedCrowdsaleExt is CrowdsaleExt {
   }
 
   function isBreakingInvestorCap(address addr, uint tokenAmount) public constant returns (bool limitBroken) {
-    assert(isWhiteListed);
+    require(isWhiteListed);
     uint maxCap = earlyParticipantWhitelist[addr].maxCap;
     return (tokenAmountOf[addr].plus(tokenAmount)) > maxCap;
   }
@@ -1126,24 +1124,24 @@ contract MintedTokenCappedCrowdsaleExt is CrowdsaleExt {
   }
 
   function setMaximumSellableTokens(uint tokens) public onlyOwner {
-    assert(!finalized);
-    assert(isUpdatable);
-    assert(now <= startsAt);
+    require(!finalized);
+    require(isUpdatable);
+    require(now <= startsAt);
 
     CrowdsaleExt lastTierCntrct = CrowdsaleExt(getLastTier());
-    assert(!lastTierCntrct.finalized());
+    require(!lastTierCntrct.finalized());
 
     maximumSellableTokens = tokens;
     MaximumSellableTokensChanged(maximumSellableTokens);
   }
 
   function updateRate(uint newOneTokenInWei) public onlyOwner {
-    assert(!finalized);
-    assert(isUpdatable);
-    assert(now <= startsAt);
+    require(!finalized);
+    require(isUpdatable);
+    require(now <= startsAt);
 
     CrowdsaleExt lastTierCntrct = CrowdsaleExt(getLastTier());
-    assert(!lastTierCntrct.finalized());
+    require(!lastTierCntrct.finalized());
 
     pricingStrategy.updateRate(newOneTokenInWei);
   }
