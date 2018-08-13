@@ -1,0 +1,58 @@
+Smart contract Description
+
+
+Private Sale: now - Jan. 24th 2019
+
+Whitelist: July 30th - Aug. 13th 2018
+
+Presale: Aug. 20th 2018 (06:00 CET) - Sept. 10th 2018
+
+Mainsale: Sept. 24th 2018 (06:00 CET) - Jan. 24th 2019
+
+
+We are developed smart contract based on zeppelin solidity. All smart contracts based on zeppelin. 
+
+
+Locking :
+Token should be locked until crowdsale has finalized. Token will be appear in user account but it can't be transfer from one account to another.
+All Tokens are being locked till 3 month post sale ends (April 24th 2019)
+
+
+
+7)Discounts/Bonus:
+We do not give discounts on tokens, but we give individual Bonus on tokens. All Bonus tokens are
+
+8)Air Drop:
+Bounty tokens are not being vested and will be delivered after main sale ends.
+
+9) Bounty:
+Bounty tokens are not being vested and will be delivered after main sale ends.
+
+10)General:
+- All amounts cashed in over 500.000€ will be vested.
+- Vesting is 1/20 per 3 month
+
+11) Token allocation:
+Bounty: 8%, Team: 18%, Advisors/Legal: 9%, Company reserve: 5%, Presale: 5%, Main Sale 55%
+
+
+
+General: (Data In German fomat)
+Token Amount issued: 10.000.000.000
+Softcap: 200.000.000 Tokens
+Hardcap: 6.000.000.000 Tokens
+100 UCT = 0,003ETH
+
+Options:
+We will collect Ether in a wallet from private buyers. On any certain point of sale we must be able to
+SmartContract and in return the original private buyer must receive tokens on his wallet address
+
+ ______________________________________________
+|Usergroup    |  Min Amount |    Bonus Tokens  |
+______________________________________________
+Private buyers  10.000€        Individual
+Whitelist       10.000€         50%
+Presale         50€             25%
+Main Sale       50              0%
+
+
