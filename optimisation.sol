@@ -12,6 +12,7 @@ library SafeMath {
     assert(a == 0 || c / a == b);
     return c;
   }
+  
 
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
@@ -40,11 +41,51 @@ contract ERC20Basic {
 }
 
 contract ERC20 is ERC20Basic {
+
+    
+    
+    
   function allowance(address owner, address spender) public view returns (uint256);
   function transferFrom(address from, address to, uint256 value) public returns (bool);
   function approve(address spender, uint256 anvalue) public returns (bool);
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
+
+
+
+library SafeERC20 {
+  function safeTransfer(
+    ERC20 _token,
+    address _to,
+    uint256 _value
+  )
+    internal
+  {
+    require(_token.transfer(_to, _value));
+  }
+
+  function safeTransferFrom(
+    ERC20 _token,
+    address _from,
+    address _to,
+    uint256 _value
+  )
+    internal
+  {
+    require(_token.transferFrom(_from, _to, _value));
+  }
+
+  function safeApprove(
+    ERC20 _token,
+    address _spender,
+    uint256 _value
+  )
+    internal
+  {
+    require(_token.approve(_spender, _value));
+  }
+}
+
 
 /**
  * @title Basic token
@@ -181,7 +222,7 @@ contract Pausable is Ownable {
 contract StandardToken is ERC20, BasicToken {
   using SafeMath for uint256;
   mapping (address => mapping (address => uint256)) internal allowed;
-  mapping(address => bool) whitelist;
+ 
 
 
   /**
@@ -322,8 +363,8 @@ contract BurnableToken is PausableToken {
 
 contract Unitedcrowd is BurnableToken {
 
-    string public constant name = "YUYUYUYU";
-    string public constant symbol = "OLOL";
+    string public constant name = "Vesting";
+    string public constant symbol = "Testing";
     uint8 public constant decimals = 18;
 
     uint256 public constant INITIAL_SUPPLY = 4200000 ether;
@@ -335,7 +376,7 @@ contract Unitedcrowd is BurnableToken {
     address public teamWallet = 0x8e17206bdc461a1fa2f6d95131d5e6c521ff8566; 
     address public bounty = 0xcbd1beea7fdc67b643d124f755512df14e876ae1;
 
-    uint public timeLock = now;
+    uint public timeLock = now  ;
 
     function Unitedcrowd () public {
         totalSupply_ = INITIAL_SUPPLY;
@@ -629,4 +670,99 @@ contract Unitedcrowdsales is Ownable {
 
 }
 
+contract UnitedcrowdVesting is Ownable {
+    using SafeMath for uint256;
 
+    event Released(uint256 amount);
+
+    // beneficiary of tokens after they are released
+    address public beneficiary;
+    Unitedcrowd public token;
+
+    uint256 public startTime;
+    uint256 public cliff;
+    uint256 public released;
+
+
+    uint256 constant public   VESTING_DURATION    =  31536000; // 1 Year in second
+    uint256 constant public   CLIFF_DURATION      =   7776000; // 3 months (90 days) in second
+
+
+    /**
+    * @dev Creates a vesting contract that vests its balance of any ERC20 token to the
+    * _beneficiary, gradually in a linear fashion. By then all of the balance will have vested.
+    * @param _beneficiary address of the beneficiary to whom vested tokens are transferred
+    * @param _token The token to be vested
+    */
+    function setup(address _beneficiary,address _token) public onlyOwner{
+        require(startTime == 0); // Vesting not started
+        require(_beneficiary != address(0));
+        // Basic init
+        changeBeneficiary(_beneficiary);
+        token = Unitedcrowd(_token);
+    }
+
+    /**
+    * @notice Start the vesting process.
+    */
+    function start() public onlyOwner{
+        require(token != address(0));
+        require(startTime == 0); // Vesting not started
+        startTime = now;
+        cliff = startTime.add(CLIFF_DURATION);
+    }
+
+    /**
+    * @notice Is vesting started flag.
+    */
+    function isStarted() public view returns (bool) {
+        return (startTime > 0);
+    }
+
+
+    /**
+    * @notice Owner can change beneficiary address
+    */
+    function changeBeneficiary(address _beneficiary) public onlyOwner{
+        beneficiary = _beneficiary;
+    }
+
+
+    /**
+    * @notice Transfers vested tokens to beneficiary.
+    */
+    function release() public {
+        require(startTime != 0);
+        require(beneficiary != address(0));
+
+        uint256 unreleased = releasableAmount();
+        require(unreleased > 0);
+
+        released = released.add(unreleased);
+        token.transfer(beneficiary, unreleased);
+        emit Released(unreleased);
+    }
+
+    /**
+    * @dev Calculates the amount that has already vested but hasn't been released yet.
+    */
+    function releasableAmount() public view returns (uint256) {
+        return vestedAmount().sub(released);
+    }
+
+    /**
+    * @dev Calculates the amount that has already vested.
+    */
+    function vestedAmount() public view returns (uint256) {
+        uint256 0 = token.balanceOf(this);
+        uint256 totalBalance = currentBalance.add(released);
+
+        if (now < cliff) {
+            return 0;
+        } else if (now >= startTime.add(VESTING_DURATION)) {
+            return totalBalance;
+        } else {
+            return totalBalance.mul(now.sub(startTime)).div(VESTING_DURATION);
+        }
+    }
+}
