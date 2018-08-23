@@ -754,7 +754,7 @@ contract UnitedcrowdVesting is Ownable {
     * @dev Calculates the amount that has already vested.
     */
     function vestedAmount() public view returns (uint256) {
-        uint256 0 = token.balanceOf(this);
+        uint256 currentBalance = token.balanceOf(this);
         uint256 totalBalance = currentBalance.add(released);
 
         if (now < cliff) {
